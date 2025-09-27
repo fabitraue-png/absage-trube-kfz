@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termin wird abgesagt...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .loading { display: block; }
+        .success { display: none; }
+        .error { display: none; color: #ff4444; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .checkmark {
+            width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 3; stroke: #4CAF50;
+            stroke-miterlimit: 10; margin: 0 auto 20px; box-shadow: inset 0px 0px 0px #4CAF50;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+        }
+        .checkmark__circle {
+            stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 3; stroke-miterlimit: 10; stroke: #4CAF50; fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark__check {
+            transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px #4CAF50; } }
+        .countdown { color: #4CAF50; font-weight: bold; font-size: 18px; }
+        .progress-bar { width: 100%; height: 4px; background-color: #e0e0e0; border-radius: 2px; margin: 20px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background-color: #4CAF50; border-radius: 2px; width: 0%; animation: progress 5s linear forwards; }
+        @keyframes progress { from { width: 0%; } to { width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <h1>Absage wird verarbeitet...</h1>
+            <p>Bitte warten Sie einen Moment.</p>
+        </div>
+        <!-- Success State -->
+        <div class="success" id="successState">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark__check" fill="none" d="m16 27 7 7 16-16"/>
+            </svg>
+            <h1>Absage wurde entgegengenommen</h1>
+            <p>Vielen Dank für Ihre Rückmeldung.</p>
+            <p>Sie werden in <span class="countdown" id="countdown">5</span> Sekunden weitergeleitet...</p>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+        <!-- Error State -->
+        <div class="error" id="errorState">
+            <h1>Fehler bei der Absage</h1>
+            <p>Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns direkt.</p>
+        </div>
+    </div>
+    <script>
+        // Zapier Webhook URL
+        const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/24703038/u1azdnt/';
+        // ID aus URL Parameter lesen
+        function getIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+        // Webhook aufrufen
+        async function callWebhook(id) {
+            try {
+                await fetch(`${WEBHOOK_URL}?id=${encodeURIComponent(id)}`, {method: 'GET', mode: 'no-cors'});
+                return true;
+            } catch (error) {
+                console.error('Webhook Error:', error);
+                return false;
+            }
+        }
+        function showSuccess() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('successState').style.display = 'block';
+            let seconds = 5;
+            const countdownElement = document.getElementById('countdown');
+            const countdown = setInterval(() => {
+                seconds--;
+                countdownElement.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    window.location.href = 'https://tally.so/r/mDQJPE';
+                }
+            }, 1000);
+            document.addEventListener('click', () => {
+                clearInterval(countdown);
+                window.location.href = 'https://tally.so/r/mDQJPE';
+            });
+        }
+        function showError() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+        }
+        async function init() {
+            const id = getIdFromUrl();
+            if (!id) {
+                console.error('Keine ID in URL gefunden');
+                showError();
+                return;
+            }
+            await callWebhook(id);
+            setTimeout(() => { showSuccess(); }, 2000);
+        }
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
